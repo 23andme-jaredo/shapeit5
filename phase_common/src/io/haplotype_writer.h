@@ -43,7 +43,7 @@ public:
 	~haplotype_writer();
 
 	//IO
-	void writeHaplotypes(std::string foutput);
+	void writeHaplotypes(std::string foutput, double filter_maf);
 };
 
 #endif
