@@ -94,11 +94,17 @@ void genotype_reader::scanGenotypes() {
 
 		//Keep common only
 		if (filter_min_maf > 0) {
-			rAN_main = bcf_get_info_int32(sr->readers[0].header, line_main, "AN", &vAN_main, &nAN_main);
-			rAC_main = bcf_get_info_int32(sr->readers[0].header, line_main, "AC", &vAC_main, &nAC_main);
-			if (nAC_main!=1) vrb.error("AC field is needed in main file for MAF filtering");
-			if (nAN_main!=1) vrb.error("AN field is needed in main file for MAF filtering");
-			float maf = std::min(vAC_main[0] * 1.0f / vAN_main[0], (vAN_main[0] - vAC_main[0]) * 1.0f / vAN_main[0]);
+			float maf, *maf_ptr;
+			int nMAF=1;
+			maf_ptr = &maf;
+			int rMAF = bcf_get_info_float(sr->readers[0].header, line_main, "MAF", &maf_ptr, &nMAF);
+			if(rMAF!=1) {
+				rAN_main = bcf_get_info_int32(sr->readers[0].header, line_main, "AN", &vAN_main, &nAN_main);
+				rAC_main = bcf_get_info_int32(sr->readers[0].header, line_main, "AC", &vAC_main, &nAC_main);
+				if (nAC_main!=1) vrb.error("AC field is needed in main file for MAF filtering");
+				if (nAN_main!=1) vrb.error("AN field is needed in main file for MAF filtering");
+				maf = std::min(vAC_main[0] * 1.0f / vAN_main[0], (vAN_main[0] - vAC_main[0]) * 1.0f / vAN_main[0]);
+			}
 			n_variants_rare += (maf < filter_min_maf);
 			if (maf < filter_min_maf) continue;
 		}
