@@ -88,11 +88,19 @@ void genotype_reader::scanGenotypesPlain() {
 				std::string id = std::string(line_unphased->d.id);
 				std::string ref = std::string(line_unphased->d.allele[0]);
 				std::string alt = std::string(line_unphased->d.allele[1]);
-				rAN = bcf_get_info_int32(sr->readers[0].header, line_unphased, "AN", &vAN, &nAN);
-				rAC = bcf_get_info_int32(sr->readers[0].header, line_unphased, "AC", &vAC, &nAC);
-				assert(nAC==1 && nAN ==1);
-				float maf = min(vAC[0] * 1.0f / vAN[0], (vAN[0] - vAC[0]) * 1.0f / vAN[0]);
-				V.push(new variant (chr, pos, id, ref, alt, vAC[0] < (vAN[0]-vAC[0]), VARTYPE_RARE));
+
+				vAC = (int *)realloc(vAC,sizeof(int)*line_unphased->n_allele);
+				int an=0;
+				bcf_calc_ac(sr->readers[0].header, line_unphased, vAC, BCF_UN_INFO|BCF_UN_FMT); 
+				for (int i=0; i<line_unphased->n_allele; i++) an += vAC[i];
+				float maf = std::min(vAC[1] * 1.0f / an, (an - vAC[1]) * 1.0f / an);
+
+				// rAN = bcf_get_info_int32(sr->readers[0].header, line_unphased, "AN", &vAN, &nAN);
+				// rAC = bcf_get_info_int32(sr->readers[0].header, line_unphased, "AC", &vAC, &nAC);
+				// assert(nAC==1 && nAN ==1);
+				// float maf = min(vAC[0] * 1.0f / vAN[0], (vAN[0] - vAC[0]) * 1.0f / vAN[0]);
+
+				V.push(new variant (chr, pos, id, ref, alt, vAC[1] < (an-vAC[1]), VARTYPE_RARE));
 				n_rare_variants ++;
 				n_total_variants ++;
 			}

@@ -94,11 +94,17 @@ void genotype_reader::scanGenotypes() {
 
 		//Keep common only
 		if (filter_min_maf > 0) {
-			rAN_main = bcf_get_info_int32(sr->readers[0].header, line_main, "AN", &vAN_main, &nAN_main);
-			rAC_main = bcf_get_info_int32(sr->readers[0].header, line_main, "AC", &vAC_main, &nAC_main);
-			if (nAC_main!=1) vrb.error("AC field is needed in main file for MAF filtering");
-			if (nAN_main!=1) vrb.error("AN field is needed in main file for MAF filtering");
-			float maf = std::min(vAC_main[0] * 1.0f / vAN_main[0], (vAN_main[0] - vAC_main[0]) * 1.0f / vAN_main[0]);
+			// get original AC and AN values from INFO field if available, otherwise calculate
+			vAC_main = (int *)realloc(vAC_main,sizeof(int)*line_main->n_allele);
+			int an=0;
+			bcf_calc_ac(sr->readers[0].header, line_main, vAC_main, BCF_UN_INFO|BCF_UN_FMT); 
+        	for (int i=0; i<line_main->n_allele; i++) an += vAC_main[i];
+			float maf = std::min(vAC_main[1] * 1.0f / an, (an - vAC_main[1]) * 1.0f / an);
+			// rAN_main = bcf_get_info_int32(sr->readers[0].header, line_main, "AN", &vAN_main, &nAN_main);
+			// rAC_main = bcf_get_info_int32(sr->readers[0].header, line_main, "AC", &vAC_main, &nAC_main);
+			// if (nAC_main!=1) vrb.error("AC field is needed in main file for MAF filtering");
+			// if (nAN_main!=1) vrb.error("AN field is needed in main file for MAF filtering");
+			//float maf = std::min(vAC_main[0] * 1.0f / vAN_main[0], (vAN_main[0] - vAC_main[0]) * 1.0f / vAN_main[0]);
 			n_variants_rare += (maf < filter_min_maf);
 			if (maf < filter_min_maf) continue;
 		}
