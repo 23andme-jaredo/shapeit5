@@ -65,10 +65,13 @@ void genotype_reader::scanGenotypesPlain() {
 		line_unphased =  bcf_sr_get_line(sr, 0);
 		line_phased =  bcf_sr_get_line(sr, 1);
 
-		assert(line_unphased);
-
 		if (line_phased && line_phased->n_allele != 2) continue;
 		if (line_unphased && line_unphased->n_allele != 2) continue;
+
+		if(!line_unphased) {
+			vrb.warning("There was a missing --input-plain variant at "+std::to_string(line_phased->pos+1));
+			continue;
+		}
 
 		if (line_phased) {
 			bcf_unpack(line_phased, BCF_UN_STR);

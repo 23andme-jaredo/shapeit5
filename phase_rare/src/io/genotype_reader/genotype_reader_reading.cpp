@@ -84,6 +84,7 @@ void genotype_reader::readGenotypesPlain() {
 
 		if (line_phased && line_phased->n_allele != 2) continue;
 		if (line_unphased && line_unphased->n_allele != 2) continue;
+		if(!line_unphased) continue;
 
 		if (line_phased) {
 			assert(V.vec_full[vt]->type == VARTYPE_SCAF);
